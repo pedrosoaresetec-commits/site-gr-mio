@@ -1,0 +1,13 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Integrantes — Grêmio Desperta ETEC</title><meta name="description" content="Quem faz parte do Grêmio Estudantil Desperta ETEC."><link rel="stylesheet" href="./css/style.css"><link rel="icon" type="image/png" href="./assets/logo.png"></head>
+<body data-base="./"><div id="header"></div><main id="main" class="wrap sec"><h1>Integrantes</h1>
+<div id="g"></div>
+</main><div id="footer"></div><script src="./data/seed.js"></script><script src="./js/app.js"></script>
+<script>document.addEventListener('gremio:ready',()=>{const G=Gremio,el=G.ui.el,$=i=>document.getElementById(i);
+
+const ms=G.store.get('members'),g=$('g');if(!ms.length)g.append(el('p','empty','Os integrantes serão apresentados aqui assim que os dados autorizados forem fornecidos.'));
+['Presidência','Diretoria','Secretarias','Departamentos','Outros cargos'].forEach(d=>{const l=ms.filter(m=>m.department===d);if(!l.length)return;g.append(el('h2',null,d));const w=el('div','grid');
+ l.forEach(m=>{const c=el('article','card');if(m.show_photo&&m.photo){const i=el('img');i.src=m.photo;i.alt='Foto de '+m.name;i.loading='lazy';i.style.cssText='width:100%;border-radius:10px';c.append(i)}
+  c.append(el('h3',null,m.name),el('span','badge',m.position||''),el('p',null,[m.grade,m.course].filter(Boolean).join(' · ')));
+  if(m.show_age&&m.age)c.append(el('p',null,m.age+' anos'));if(m.bio)c.append(el('p',null,m.bio));
+  if(m.show_socials&&/^https?:\/\//.test(m.social||'')){const a=el('a',null,'Rede social');a.href=m.social;a.rel='noopener noreferrer';a.target='_blank';c.append(a)}w.append(c)});g.append(w)});})</script></body></html>

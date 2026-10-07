@@ -1,0 +1,39 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mural do Estudante — Grêmio Desperta ETEC</title><meta name="description" content="Propostas e sugestões dos estudantes publicadas pelo Grêmio.">
+<link rel="stylesheet" href="./css/style.css"><link rel="icon" type="image/png" href="./assets/logo.png"></head>
+<body data-base="./"><div id="header"></div>
+<main id="main" class="wrap sec"><h1>Mural do Estudante</h1>
+<p class="notice">Aqui aparecem apenas propostas já aprovadas pelo Grêmio. Este site não tem servidor: ao enviar, você recebe uma mensagem pronta para mandar por e-mail. <strong>Nada é enviado automaticamente.</strong></p>
+<div id="m" class="grid mural" style="margin:1.5rem 0"></div>
+<h2>Enviar proposta</h2>
+<form class="f" id="f" novalidate>
+<label>Categoria<select name="cat"><option>Proposta</option><option>Sugestão</option><option>Reclamação</option><option>Ideia</option><option>Elogio</option><option>Outro</option></select></label>
+<label>Título<input name="title" maxlength="80" required></label>
+<label>Mensagem<textarea name="msg" rows="5" maxlength="1000" required></textarea></label>
+<label>Nome (opcional)<input name="name" maxlength="60"></label>
+<label class="chk"><input type="checkbox" name="anon" checked> Enviar anonimamente (não publicar meu nome)</label>
+<input class="hp" name="site" tabindex="-1" autocomplete="off" aria-hidden="true">
+<button class="btn" type="submit">Gerar mensagem</button></form>
+<div id="out" class="notice" hidden aria-live="polite"><p>Mensagem pronta. Ainda <strong>não foi enviada</strong>.</p><pre id="txt" style="white-space:pre-wrap"></pre><a class="btn" id="mail">Abrir meu e-mail</a> <button class="btn" id="copy" type="button">Copiar mensagem</button></div>
+</main><div id="footer"></div>
+<script src="./data/seed.js"></script><script src="./js/app.js"></script>
+<script>document.addEventListener('gremio:ready',()=>{
+const G=Gremio,el=G.ui.el,m=document.getElementById('m');
+const list=G.store.get('proposals').filter(p=>p.moderation==='approved');
+if(!list.length)m.append(el('p','empty','Nenhuma proposta publicada ainda.'));
+list.forEach(p=>{const c=el('button','card');c.type='button';c.append(el('span','badge',p.status||'Recebida'),el('h3',null,p.title),el('p',null,p.message),el('small',null,p.category+' · '+(p.author||'Anônimo')));
+ c.onclick=()=>{const on=c.classList.contains('sel');m.querySelectorAll('.card').forEach(x=>x.classList.remove('sel'));m.classList.toggle('focus',!on);if(!on)c.classList.add('sel')};m.append(c)});
+const f=document.getElementById('f');
+f.onsubmit=e=>{e.preventDefault();const v=Object.fromEntries(new FormData(f));
+ if(v.site)return;
+ const last=+localStorage.getItem('gremio.v1.lastsend')||0;
+ if(Date.now()-last<60000){G.ui.toast('Aguarde um minuto para gerar outra mensagem.');return}
+ if(v.title.trim().length<3||v.msg.trim().length<10){G.ui.toast('Preencha título e mensagem.');return}
+ const who=v.anon?'ANÔNIMO (não publicar nome)':(v.name.trim()||'Sem nome')+' (pode publicar o nome)';
+ const t='[Mural do Estudante]\nCategoria: '+v.cat+'\nTítulo: '+v.title.trim()+'\nAutor: '+who+'\n\n'+v.msg.trim();
+ document.getElementById('txt').textContent=t;
+ document.getElementById('mail').href='mailto:'+G.store.get('contactEmail')+'?subject='+encodeURIComponent('Mural: '+v.title.trim())+'&body='+encodeURIComponent(t);
+ document.getElementById('out').hidden=false;try{localStorage.setItem('gremio.v1.lastsend',Date.now())}catch(_){}
+ f.reset()};
+document.getElementById('copy').onclick=()=>navigator.clipboard.writeText(document.getElementById('txt').textContent).then(()=>G.ui.toast('Mensagem copiada.'),()=>G.ui.toast('Não foi possível copiar. Selecione o texto manualmente.'))})</script>
+</body></html>

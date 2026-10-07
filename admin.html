@@ -1,0 +1,81 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin local — Grêmio Desperta ETEC</title><meta name="robots" content="noindex">
+<link rel="stylesheet" href="./css/style.css"><link rel="icon" type="image/png" href="./assets/logo.png"></head>
+<body data-base="./"><div id="header"></div>
+<main id="main" class="wrap sec"><h1>Painel administrativo (modo local)</h1>
+<p class="notice"><strong>Não é segurança real.</strong> O código de acesso só evita acesso casual: quem abrir o DevTools pode contorná-lo. Os dados ficam só neste navegador. Para publicar, use <em>Exportar</em> e substitua <code>data/seed.js</code> no projeto.</p>
+<form class="f" id="login"><label id="ll">Código de acesso<input type="password" id="pw" autocomplete="current-password" minlength="6" required></label><button class="btn" id="lb">Entrar</button></form>
+<div id="panel" hidden>
+<div class="bar"><button class="btn" id="exp">Exportar seed.js</button><button class="btn" id="out" type="button">Sair</button></div>
+<h2>Evento</h2>
+<form class="f" id="ef"><input type="hidden" name="id">
+<label>Título<input name="title" required maxlength="100"></label>
+<label>Data<input type="date" name="date" required></label>
+<label>Data de encerramento (se durar mais de um dia)<input type="date" name="endDate"></label>
+<label>Início<input type="time" name="start"></label>
+<label>Local<input name="location" maxlength="100"></label>
+<label>Categoria<select name="category"><option>Reunião</option><option>Evento</option><option>Projeto</option><option>Campanha</option><option>Assembleia</option><option>Outro</option></select></label>
+<label>Descrição<textarea name="description" rows="3" maxlength="600"></textarea></label>
+<button class="btn">Salvar evento</button></form>
+<div id="el"></div>
+<h2>Propostas</h2>
+<form class="f" id="pf"><label>Colar mensagem recebida por e-mail<textarea name="raw" rows="4" required></textarea></label><button class="btn">Importar como pendente</button></form>
+<div id="pl"></div>
+<h2>Integrantes</h2><p class="notice">Foto, idade e rede social só aparecem no site se você marcar a autorização de cada um. Na dúvida, deixe desmarcado.</p>
+<form class="f" id="mf"><input type="hidden" name="id"><label>Nome<input name="name" required maxlength="80"></label><label>Cargo<input name="position" maxlength="60"></label>
+<label>Setor<select name="department"><option>Presidência</option><option>Diretoria</option><option>Secretarias</option><option>Departamentos</option><option>Outros cargos</option></select></label>
+<label>Série<input name="grade" maxlength="30"></label><label>Curso<input name="course" maxlength="60"></label><label>Idade (opcional)<input type="number" name="age" min="10" max="99"></label>
+<label>Rede social (link, opcional)<input type="url" name="social"></label><label>Descrição<textarea name="bio" rows="3" maxlength="400"></textarea></label><label>Foto<input type="file" name="photo" accept="image/jpeg,image/png,image/webp"></label>
+<label class="chk"><input type="checkbox" name="show_photo"> Autorizado exibir foto</label><label class="chk"><input type="checkbox" name="show_age"> Autorizado exibir idade</label><label class="chk"><input type="checkbox" name="show_socials"> Autorizado exibir rede social</label>
+<button class="btn">Salvar integrante</button></form><div id="ml"></div>
+<h2>Galeria</h2><form class="f" id="gf"><label>Fotos<input type="file" name="files" accept="image/jpeg,image/png,image/webp" multiple required></label><label>Categoria/evento<input name="category" maxlength="40"></label><label>Legenda (texto alternativo)<input name="caption" maxlength="120" required></label><button class="btn">Adicionar fotos</button></form><div id="gl" class="grid"></div></div></main><div id="footer"></div>
+<script src="./data/seed.js"></script><script src="./js/app.js"></script>
+<script>document.addEventListener('gremio:ready',()=>{
+const G=Gremio,S=G.store,el=G.ui.el,$=id=>document.getElementById(id),K='gremio.v1.adminhash';
+const hash=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('gremio:'+s)))].map(b=>b.toString(16).padStart(2,'0')).join('');
+const first=!localStorage.getItem(K);if(first){$('lb').textContent='Definir código e entrar'}
+function show(){$('login').hidden=true;$('panel').hidden=false;sessionStorage.setItem('gremio.v1.admin','1');draw()}
+if(sessionStorage.getItem('gremio.v1.admin'))show();
+$('login').onsubmit=async e=>{e.preventDefault();if(!crypto.subtle){G.ui.toast('Abra o site por https ou localhost.');return}
+ const h=await hash($('pw').value);
+ if(first){localStorage.setItem(K,h);show()}else if(h===localStorage.getItem(K))show();else G.ui.toast('Código incorreto.')};
+$('out').onclick=()=>{sessionStorage.removeItem('gremio.v1.admin');location.reload()};
+function draw(){setTimeout(draw2);
+ const evs=S.get('events'),box=$('el');box.replaceChildren();
+ if(!evs.length)box.append(el('p','empty','Nenhum evento cadastrado.'));
+ evs.forEach(e=>{const r=el('p',null,G.events.range(e)+' — '+e.title+' ');
+  const ed=el('button','btn','Editar');ed.onclick=()=>{const f=$('ef');for(const k in e)if(f.elements[k])f.elements[k].value=e[k];f.scrollIntoView()};
+  const de=el('button','btn','Excluir');de.onclick=()=>{if(confirm('Tem certeza que deseja excluir este item?')){S.set('events',evs.filter(x=>x.id!==e.id));G.ui.toast('Evento excluído.');draw()}};
+  r.append(ed,' ',de);box.append(r)});
+ const ps=S.get('proposals'),pl=$('pl');pl.replaceChildren();
+ if(!ps.length)pl.append(el('p','empty','Nenhuma proposta importada.'));
+ ps.forEach(p=>{const c=el('div','card');c.append(el('span','badge',p.moderation+' · '+p.status),el('h3',null,p.title),el('p',null,p.message));
+  const st=el('select');['Recebida','Em análise','Aprovada','Em andamento','Concluída','Recusada'].forEach(o=>{const op=el('option',null,o);op.selected=o===p.status;st.append(op)});
+  st.setAttribute('aria-label','Status');st.onchange=()=>{p.status=st.value;S.set('proposals',ps);draw()};c.append(st);
+  [['approved','Aprovar'],['rejected','Rejeitar'],['archived','Arquivar']].forEach(([k,t])=>{const b=el('button','btn',t);b.onclick=()=>{p.moderation=k;S.set('proposals',ps);draw()};c.append(' ',b)});
+  const d=el('button','btn','Excluir');d.onclick=()=>{if(confirm('Tem certeza que deseja excluir este item?')){S.set('proposals',ps.filter(x=>x!==p));draw()}};c.append(' ',d);pl.append(c)})}
+function draw2(){
+ const ms=S.get('members'),ml=$('ml');ml.replaceChildren();if(!ms.length)ml.append(el('p','empty','Nenhum integrante cadastrado.'));
+ ms.forEach(m=>{const r=el('p',null,m.name+' — '+(m.position||'')+' ');const ed=el('button','btn','Editar');ed.onclick=()=>{const f=$('mf');for(const k in m)if(f.elements[k]&&f.elements[k].type!=='file'&&f.elements[k].type!=='checkbox')f.elements[k].value=m[k];['show_photo','show_age','show_socials'].forEach(k=>f.elements[k].checked=!!m[k]);f.scrollIntoView()};
+  const d=el('button','btn','Excluir');d.onclick=()=>{if(confirm('Tem certeza que deseja excluir este item?')){S.set('members',ms.filter(x=>x!==m));draw2()}};r.append(ed,' ',d);ml.append(r)});
+ const gs=S.get('gallery'),gl=$('gl');gl.replaceChildren();if(!gs.length)gl.append(el('p','empty','Nenhuma foto na galeria.'));
+ gs.forEach(g=>{const c=el('div','card'),i=el('img');i.src=g.src;i.alt=g.caption;i.loading='lazy';const d=el('button','btn','Excluir');d.onclick=()=>{if(confirm('Tem certeza que deseja excluir este item?')){S.set('gallery',gs.filter(x=>x!==g));draw2()}};c.append(i,el('small',null,g.category||''),d);gl.append(c)})}
+$('mf').onsubmit=async e=>{e.preventDefault();const f=e.target,ms=S.get('members'),old=ms.find(x=>x.id===f.id.value),m={id:f.id.value||String(Date.now()),photo:old&&old.photo||''};
+ ['name','position','department','grade','course','age','social','bio'].forEach(k=>m[k]=f[k].value);['show_photo','show_age','show_socials'].forEach(k=>m[k]=f[k].checked);
+ try{if(f.photo.files[0])m.photo=await G.img(f.photo.files[0],400)}catch(x){G.ui.toast(x.message||'Imagem inválida.');return}
+ if(old)ms[ms.indexOf(old)]=m;else ms.push(m);if(S.set('members',ms)){G.ui.toast('Integrante salvo.');f.reset();f.id.value='';draw2()}};
+$('gf').onsubmit=async e=>{e.preventDefault();const f=e.target,gs=S.get('gallery');
+ try{for(const file of f.files.files)gs.push({id:String(Date.now()+Math.random()),src:await G.img(file,1000),category:f.category.value,caption:f.caption.value})}catch(x){G.ui.toast(x.message||'Imagem inválida.');return}
+ if(S.set('gallery',gs)){G.ui.toast('Fotos adicionadas.');f.reset();draw2()}};
+$('ef').onsubmit=e=>{e.preventDefault();const v=Object.fromEntries(new FormData(e.target)),evs=S.get('events');
+ if(v.endDate&&v.endDate<v.date){G.ui.toast('A data de encerramento não pode ser antes da data inicial.');return}
+ if(v.id){const i=evs.findIndex(x=>x.id===v.id);evs[i]=v}else{v.id=String(Date.now());evs.push(v)}
+ if(S.set('events',evs)){G.ui.toast('Evento salvo.');e.target.reset();e.target.elements.id.value='';draw()}};
+$('pf').onsubmit=e=>{e.preventDefault();const raw=e.target.raw.value,g=k=>(raw.match(new RegExp(k+': (.*)'))||[])[1]||'';
+ const ps=S.get('proposals'),anon=/AN[ÔO]NIMO/.test(g('Autor'));
+ ps.push({id:String(Date.now()),title:g('Título')||'Sem título',category:g('Categoria')||'Outro',message:raw.split('\n\n').slice(1).join('\n\n').trim()||raw,author:anon?'':g('Autor').replace(/ \(.*\)/,''),moderation:'pending',status:'Recebida'});
+ if(S.set('proposals',ps)){G.ui.toast('Proposta importada como pendente.');e.target.reset();draw()}};
+$('exp').onclick=()=>{const o={contactEmail:window.GREMIO_SEED.contactEmail,events:S.get('events'),proposals:S.get('proposals').filter(p=>p.moderation==='approved'),members:S.get('members'),gallery:S.get('gallery')};
+ const a=el('a');a.href=URL.createObjectURL(new Blob(['window.GREMIO_SEED='+JSON.stringify(o,null,1)+';'],{type:'text/javascript'}));a.download='seed.js';a.click();G.ui.toast('seed.js gerado. Substitua em /data e publique.')};
+})</script>
+</body></html>

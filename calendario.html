@@ -1,0 +1,23 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calendário — Grêmio Desperta ETEC</title><meta name="description" content="Calendário oficial do Grêmio Estudantil Desperta ETEC.">
+<link rel="stylesheet" href="./css/style.css"><link rel="icon" type="image/png" href="./assets/logo.png"></head>
+<body data-base="./"><div id="header"></div>
+<main id="main" class="wrap sec"><h1>Calendário</h1>
+<div class="bar"><button class="btn" id="prev" aria-label="Mês anterior">‹</button><h2 id="mt" aria-live="polite"></h2><button class="btn" id="next" aria-label="Próximo mês">›</button></div>
+<div id="adm" style="margin-bottom:1rem"></div><div id="cal" class="cal" aria-hidden="true"></div>
+<h2>Eventos do mês</h2><div id="list" class="grid"></div></main><div id="footer"></div>
+<script src="./data/seed.js"></script><script src="./js/app.js"></script>
+<script>document.addEventListener('gremio:ready',()=>{
+const G=Gremio,el=G.ui.el,E=G.events,pad=n=>String(n).padStart(2,'0');let d=new Date();d.setDate(1);
+if(sessionStorage.getItem('gremio.v1.admin')){const a=el('a','btn','Gerenciar eventos (admin)');a.href='admin.html';document.getElementById('adm').append(a)}
+function draw(){const y=d.getFullYear(),m=d.getMonth(),n=new Date(y,m+1,0).getDate(),ym=y+'-'+pad(m+1),first=ym+'-01',last=ym+'-'+pad(n),
+ evs=E.all().filter(e=>e.date<=last&&E.end(e)>=first),c=document.getElementById('cal'),td=new Date().toLocaleDateString('sv-SE');
+ document.getElementById('mt').textContent=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+ c.replaceChildren();['D','S','T','Q','Q','S','S'].forEach(x=>c.append(el('div','h',x)));
+ for(let i=0;i<d.getDay();i++)c.append(el('div'));
+ for(let i=1;i<=n;i++){const ds=ym+'-'+pad(i),cell=el('div',ds===td?'today':null);cell.append(el('b',null,i));
+  evs.filter(e=>e.date<=ds&&E.end(e)>=ds).forEach(e=>{const b=el('button','ev',e.title);b.type='button';b.title=e.title+' ('+E.range(e)+')';b.onclick=()=>E.open(e);cell.append(b)});c.append(cell)}
+ c.removeAttribute('aria-hidden');E.render(document.getElementById('list'),evs,'Nenhum evento neste mês.')}
+document.getElementById('prev').onclick=()=>{d.setMonth(d.getMonth()-1);draw()};
+document.getElementById('next').onclick=()=>{d.setMonth(d.getMonth()+1);draw()};draw()})</script>
+</body></html>

@@ -1,0 +1,15 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Galeria — Grêmio Desperta ETEC</title><meta name="description" content="Fotos dos eventos e ações do Grêmio."><link rel="stylesheet" href="./css/style.css"><link rel="icon" type="image/png" href="./assets/logo.png"></head>
+<body data-base="./"><div id="header"></div><main id="main" class="wrap sec"><h1>Galeria</h1>
+<div class="filters" id="fl"></div><div class="grid" id="gr"></div><dialog id="lb" aria-label="Foto ampliada"><img id="li" alt="" style="max-width:90vw;max-height:75vh"><p id="lc"></p><button class="btn" id="lp">‹ Anterior</button> <button class="btn" id="ln">Próxima ›</button> <button class="btn" id="lx">Fechar</button></dialog>
+</main><div id="footer"></div><script src="./data/seed.js"></script><script src="./js/app.js"></script>
+<script>document.addEventListener('gremio:ready',()=>{const G=Gremio,el=G.ui.el,$=i=>document.getElementById(i);
+
+const all=G.store.get('gallery'),gr=$('gr'),fl=$('fl'),lb=$('lb');let cur=[],ix=0;
+const open=i=>{ix=(i+cur.length)%cur.length;$('li').src=cur[ix].src;$('li').alt=cur[ix].caption;$('lc').textContent=cur[ix].caption;if(!lb.open)lb.showModal()};
+function show(c){cur=c==='Todas'?all:all.filter(x=>x.category===c);gr.replaceChildren();fl.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===c));
+ if(!cur.length)gr.append(el('p','empty','Nenhuma foto encontrada.'));
+ cur.forEach((g,i)=>{const b=el('button','card'),im=el('img');im.src=g.src;im.alt=g.caption;im.loading='lazy';b.append(im);b.onclick=()=>open(i);gr.append(b)})}
+['Todas',...new Set(all.map(x=>x.category).filter(Boolean))].forEach(c=>{const b=el('button',null,c);b.onclick=()=>show(c);fl.append(b)});show('Todas');
+$('lp').onclick=()=>open(ix-1);$('ln').onclick=()=>open(ix+1);$('lx').onclick=()=>lb.close();
+lb.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')open(ix-1);if(e.key==='ArrowRight')open(ix+1)});})</script></body></html>
